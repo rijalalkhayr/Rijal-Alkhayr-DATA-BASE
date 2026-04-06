@@ -167,41 +167,6 @@ html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--gray);colo
 .gd-step{margin-bottom:12px;}
 #menuToggle{margin-left:10px;background:#f0f4f8;border:none;border-radius:12px;padding:6px 12px;font-size:20px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.1);}
 @media(max-width:720px){
-  .sidebar{position:fixed;height:100%;z-index:300;transform:translateX(100%);}
-  .sidebar.mob{transform:translateX(0);}
-  .charts-grid,.rpt-grid{grid-template-columns:1fr;}
-  .dgrid{grid-template-columns:1fr;}
-  .kpi-row{grid-template-columns:repeat(2,1fr);}
-  .fnav .fn, .fnav .fs{width:100%;}
-  .fnav .fb{order:-1;}
-  #menuToggle{display:inline-block;}
-}
-  /* تعديل زر القائمة ليظهر بالكامل على الهواتف */
-#menuToggle {
-  display: inline-block;
-  position: relative;
-  z-index: 999;
-  background: var(--gold);
-  color: var(--navy);
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 22px;
-  margin-left: 0;
-  margin-right: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-/* ضمان ظهور الشريط الجانبي بشكل صحيح */
-.sidebar {
-  transform: translateX(0);
-  transition: transform 0.3s ease;
-}
-.sidebar.mob {
-  transform: translateX(100%);
-}
-@media(max-width:720px){
   .sidebar {
     position: fixed;
     top: 0;
@@ -210,6 +175,7 @@ html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--gray);colo
     z-index: 1000;
     width: 260px;
     transform: translateX(100%);
+    transition: transform 0.3s ease;
   }
   .sidebar.mob {
     transform: translateX(0);
@@ -217,7 +183,37 @@ html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--gray);colo
   .tog-sb {
     display: none;
   }
-}
+  .charts-grid, .rpt-grid {
+    grid-template-columns: 1fr;
+  }
+  .dgrid {
+    grid-template-columns: 1fr;
+  }
+  .kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .fnav .fn, .fnav .fs {
+    width: 100%;
+  }
+  .fnav .fb {
+    order: -1;
+  }
+  #menuToggle {
+    display: inline-block;
+    position: relative;
+    z-index: 999;
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+    margin-left: 0;
+    margin-right: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  }
 </style>
 </head>
 <body>
@@ -274,14 +270,7 @@ html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--gray);colo
 <div class="overlay" id="det-ov"><div class="modal"><div class="mhdr"><h2 id="det-t">تفاصيل الحالة</h2><button class="mcls" onclick="closeOv('det-ov')">✕</button></div><div class="mbdy" id="det-b"></div><div class="mftr"><button class="btn btn-red btn-sm" id="del-btn">حذف</button><button class="btn btn-ghost btn-sm" id="wa-btn">💬 واتساب</button><button class="btn btn-blue btn-sm" id="edit-btn">✏ تعديل</button></div></div></div>
 <div class="overlay" id="edit-ov"><div class="modal"><div class="mhdr"><h2>تعديل بيانات الحالة</h2><button class="mcls" onclick="closeOv('edit-ov')">✕</button></div><div class="mbdy" id="edit-b"></div><div class="mftr"><button class="btn btn-ghost" onclick="closeOv('edit-ov')">إلغاء</button><button class="btn btn-green" onclick="saveEdit()">💾 حفظ التعديلات</button></div></div></div>
 <div class="toast" id="toast"></div>
-  function fixTableScroll() {
-  const tableWrap = document.querySelector('.tw');
-  if (tableWrap) {
-    tableWrap.style.maxHeight = (window.innerHeight - 200) + 'px';
-  }
-}
-window.addEventListener('resize', fixTableScroll);
-window.addEventListener('load', fixTableScroll);
+  
 <script>
 // البيانات الأولية الكاملة (53 حالة)
 const SEED_RAW = [
@@ -339,6 +328,14 @@ const SEED_RAW = [
   {num:52,name:"مباركة دهوار",phone:"",social:"أرملة",children:5,housing:"كراء",rent:"",income:0,incomeSrc:"",health:"",needs:"",address:"",reporter:"",date:"",lastHelp:"",priority:"",status:"نشطة",notes:"توفيت بقي 5 أبناء يكترون",kids:[],patients:[],hasDebt:"n",hasHealth:"n",debtDetail:"",healthGen:""},
   {num:53,name:"مريم دهوار",phone:"",social:"أرملة",children:2,housing:"ملك",rent:"",income:0,incomeSrc:"",health:"",needs:"",address:"",reporter:"",date:"",lastHelp:"",priority:"",status:"نشطة",notes:"",kids:[],patients:[],hasDebt:"n",hasHealth:"n",debtDetail:"",healthGen:""}
 ];
+  function fixTableScroll() {
+  const tableWrap = document.querySelector('.tw');
+  if (tableWrap) {
+    tableWrap.style.maxHeight = (window.innerHeight - 200) + 'px';
+  }
+}
+window.addEventListener('resize', fixTableScroll);
+window.addEventListener('load', fixTableScroll);
 const SEED = SEED_RAW.map(c => {
   let needsArr = [];
   if (c.needs && typeof c.needs === 'string') {
