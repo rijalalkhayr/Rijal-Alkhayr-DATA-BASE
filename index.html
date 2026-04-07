@@ -90,10 +90,10 @@ html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--gray);colo
   background: var(--white);
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  overflow-y: auto;
   overflow-x: auto;
-  max-height: calc(100vh - 200px);
-  min-height: 300px;
+  overflow-y: visible;
+  max-height: none;
+  min-height: auto;
 }
 .tw table {
   width: 100%;
@@ -102,7 +102,7 @@ html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--gray);colo
 }
 .tw tbody tr:last-child td {
   border-bottom: none;
-    }
+}
 .tag{display:inline-flex;align-items:center;padding:3px 12px;border-radius:40px;font-size:11px;font-weight:700;}
 .t-urg{background:#fee2e2;color:#991b1b;}
 .t-hi{background:#fef3cd;color:#92400e;}
@@ -213,7 +213,7 @@ html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--gray);colo
     margin-right: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   }
-  }
+}
 </style>
 </head>
 <body>
@@ -270,7 +270,6 @@ html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--gray);colo
 <div class="overlay" id="det-ov"><div class="modal"><div class="mhdr"><h2 id="det-t">تفاصيل الحالة</h2><button class="mcls" onclick="closeOv('det-ov')">✕</button></div><div class="mbdy" id="det-b"></div><div class="mftr"><button class="btn btn-red btn-sm" id="del-btn">حذف</button><button class="btn btn-ghost btn-sm" id="wa-btn">💬 واتساب</button><button class="btn btn-blue btn-sm" id="edit-btn">✏ تعديل</button></div></div></div>
 <div class="overlay" id="edit-ov"><div class="modal"><div class="mhdr"><h2>تعديل بيانات الحالة</h2><button class="mcls" onclick="closeOv('edit-ov')">✕</button></div><div class="mbdy" id="edit-b"></div><div class="mftr"><button class="btn btn-ghost" onclick="closeOv('edit-ov')">إلغاء</button><button class="btn btn-green" onclick="saveEdit()">💾 حفظ التعديلات</button></div></div></div>
 <div class="toast" id="toast"></div>
-  
 <script>
 // البيانات الأولية الكاملة (53 حالة)
 const SEED_RAW = [
@@ -328,14 +327,7 @@ const SEED_RAW = [
   {num:52,name:"مباركة دهوار",phone:"",social:"أرملة",children:5,housing:"كراء",rent:"",income:0,incomeSrc:"",health:"",needs:"",address:"",reporter:"",date:"",lastHelp:"",priority:"",status:"نشطة",notes:"توفيت بقي 5 أبناء يكترون",kids:[],patients:[],hasDebt:"n",hasHealth:"n",debtDetail:"",healthGen:""},
   {num:53,name:"مريم دهوار",phone:"",social:"أرملة",children:2,housing:"ملك",rent:"",income:0,incomeSrc:"",health:"",needs:"",address:"",reporter:"",date:"",lastHelp:"",priority:"",status:"نشطة",notes:"",kids:[],patients:[],hasDebt:"n",hasHealth:"n",debtDetail:"",healthGen:""}
 ];
-  function fixTableScroll() {
-  const tableWrap = document.querySelector('.tw');
-  if (tableWrap) {
-    tableWrap.style.maxHeight = (window.innerHeight - 200) + 'px';
-  }
-}
-window.addEventListener('resize', fixTableScroll);
-window.addEventListener('load', fixTableScroll);
+
 const SEED = SEED_RAW.map(c => {
   let needsArr = [];
   if (c.needs && typeof c.needs === 'string') {
@@ -420,7 +412,9 @@ function renderTable() {
   rows.forEach(c => {
     tb.innerHTML += `<tr><td style="font-weight:bold">${c.num}</td><td><strong>${c.name}</strong><br><span style="font-size:10px;color:var(--muted)">${c.date||''}</span></td><td>${c.phone||'—'}</td><td><span class="tag">${c.social||'—'}</span></td><td style="text-align:center">${c.children||0}</td><td><span class="tag ${c.housing==='كراء'?'t-rent':'t-own'}">${c.housing||'—'}</span></td><td><span class="tag ${c.priority==='عاجل جداً'?'t-urg':c.priority==='عالية'?'t-hi':c.priority==='متوسطة'?'t-mid':'t-lo'}">${c.priority||'—'}</span></td><td style="max-width:150px;white-space:normal;">${(Array.isArray(c.needs)?c.needs:[]).slice(0,2).join('، ')||'—'}</td><td><button class="btn btn-blue btn-sm" onclick="openDet(${c.id})">تفاصيل</button></td></tr>`;
   });
-  fixTableScroll();
+  // تأكيد إزالة أي قيود ارتفاع
+  const tw = document.querySelector('.tw');
+  if (tw) tw.style.maxHeight = 'none';
 }
 
 let activeId = null;
@@ -432,6 +426,23 @@ function openDet(id) {
     <div class="dsec"><h4>الوضع المادي</h4><div class="dgrid"><div class="di"><div class="dl">السكن</div><div class="dv">${c.housing||'—'}</div></div><div class="di"><div class="dl">الكراء</div><div class="dv">${c.rent||0} درهم</div></div><div class="di"><div class="dl">المدخول</div><div class="dv">${c.income||0} درهم</div></div><div class="di"><div class="dl">مصدر المدخول</div><div class="dv">${c.incomeSrc||'—'}</div></div><div class="di"><div class="dl">الديون</div><div class="dv">${c.hasDebt==='y'?'نعم – '+(c.debtDetail||''):'لا'}</div></div></div></div>
     <div class="dsec"><h4>الاحتياجات</h4><div class="dgrid"><div class="di"><div class="dl">الاحتياجات</div><div class="dv">${(Array.isArray(c.needs)?c.needs:[]).join('، ')||'—'}</div></div><div class="di"><div class="dl">الأولوية</div><div class="dv">${c.priority||'—'}</div></div><div class="di"><div class="dl">المُبلِّغ</div><div class="dv">${c.reporter||'—'}</div></div></div></div>`;
   if (c.notes) html += `<div class="dsec"><h4>ملاحظات</h4><p>${c.notes}</p></div>`;
+  // إضافة بيانات الأبناء
+  if (c.kids && c.kids.length) {
+    html += `<div class="dsec"><h4>👶 بيانات الأبناء</h4><div class="dgrid">`;
+    c.kids.forEach((kid, idx) => {
+      html += `<div class="di"><div class="dl">الابن ${idx+1}</div><div class="dv">${kid.name || '—'} (${kid.gender || '—'}) - ${kid.level || '—'}</div></div>`;
+    });
+    html += `</div></div>`;
+  }
+  // إضافة بيانات الحالة الصحية
+  if (c.patients && c.patients.length) {
+    html += `<div class="dsec"><h4>🩺 الحالة الصحية</h4><div class="dgrid">`;
+    c.patients.forEach((p, idx) => {
+      html += `<div class="di"><div class="dl">المريض ${idx+1}</div><div class="dv">${p.who || '—'} : ${p.diseases ? p.diseases.join(', ') : '—'} ${p.detail ? ' ('+p.detail+')' : ''}</div></div>`;
+    });
+    if (c.healthGen) html += `<div class="di full"><div class="dl">ملاحظات صحية</div><div class="dv">${c.healthGen}</div></div>`;
+    html += `</div></div>`;
+  }
   document.getElementById('det-b').innerHTML = html;
   document.getElementById('del-btn').onclick = () => { if(confirm('حذف هذه الحالة نهائياً؟')){ let db = loadDB().filter(x=>x.id!==id); db.forEach((x,i)=>x.num=i+1); saveDB(db); closeOv('det-ov'); renderTable(); renderDash(); toast('تم الحذف','ok'); } };
   document.getElementById('wa-btn').onclick = () => window.open('https://wa.me/?text='+encodeURIComponent(buildWA(c)), '_blank');
@@ -439,6 +450,26 @@ function openDet(id) {
   document.getElementById('det-ov').classList.add('on');
 }
 function closeOv(id) { document.getElementById(id).classList.remove('on'); }
+
+function addEditKid() {
+  let container = document.getElementById('edit-kids-list');
+  if (!container) return;
+  let idx = container.children.length;
+  let div = document.createElement('div');
+  div.className = 'erow kid-edit';
+  div.innerHTML = `<div class="ef"><input type="text" placeholder="الاسم" name="kid_name_${idx}"></div><div class="ef"><select name="kid_gender_${idx}"><option value="">الجنس</option><option>ذكر</option><option>أنثى</option></select></div><div class="ef"><input type="text" placeholder="المستوى الدراسي" name="kid_level_${idx}"></div><button type="button" class="btn btn-red btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  container.appendChild(div);
+}
+function addEditPat() {
+  let container = document.getElementById('edit-pats-list');
+  if (!container) return;
+  let idx = container.children.length;
+  let div = document.createElement('div');
+  div.className = 'erow pat-edit';
+  div.innerHTML = `<div class="ef"><input type="text" placeholder="صلة المريض" name="pat_who_${idx}"></div><div class="ef"><input type="text" placeholder="المرض (مفصول بفواصل)" name="pat_diseases_${idx}"></div><div class="ef"><input type="text" placeholder="تفاصيل" name="pat_detail_${idx}"></div><button type="button" class="btn btn-red btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  container.appendChild(div);
+}
+
 function openEdit(id) {
   let c = loadDB().find(x=>x.id===id); if(!c) return;
   activeId = id;
@@ -448,9 +479,22 @@ function openEdit(id) {
   let hsOpts = ['ملك','كراء','مع الأهل','مؤقت'];
   let prOpts = ['عاجل جداً','عالية','متوسطة','منخفضة'];
   let nchks = needOpts.map(nd => `<label style="display:inline-flex;align-items:center;gap:5px;margin:3px;font-size:12px;background:var(--gray);padding:5px 10px;border-radius:20px;"><input type="checkbox" name="end" value="${nd}" ${needsArr.includes(nd)?'checked':''}> ${nd}</label>`).join('');
+  // بناء قائمة الأبناء الحالية
+  let kidsHtml = '';
+  if (c.kids && c.kids.length) {
+    c.kids.forEach((kid, idx) => {
+      kidsHtml += `<div class="erow kid-edit"><div class="ef"><input type="text" placeholder="الاسم" name="kid_name_${idx}" value="${kid.name || ''}"></div><div class="ef"><select name="kid_gender_${idx}"><option value="">الجنس</option><option ${kid.gender === 'ذكر' ? 'selected' : ''}>ذكر</option><option ${kid.gender === 'أنثى' ? 'selected' : ''}>أنثى</option></select></div><div class="ef"><input type="text" placeholder="المستوى الدراسي" name="kid_level_${idx}" value="${kid.level || ''}"></div><button type="button" class="btn btn-red btn-sm" onclick="this.parentElement.remove()">✕</button></div>`;
+    });
+  }
+  let patientsHtml = '';
+  if (c.patients && c.patients.length) {
+    c.patients.forEach((p, idx) => {
+      patientsHtml += `<div class="erow pat-edit"><div class="ef"><input type="text" placeholder="صلة المريض" name="pat_who_${idx}" value="${p.who || ''}"></div><div class="ef"><input type="text" placeholder="المرض (مفصول بفواصل)" name="pat_diseases_${idx}" value="${p.diseases ? p.diseases.join(',') : ''}"></div><div class="ef"><input type="text" placeholder="تفاصيل" name="pat_detail_${idx}" value="${p.detail || ''}"></div><button type="button" class="btn btn-red btn-sm" onclick="this.parentElement.remove()">✕</button></div>`;
+    });
+  }
   document.getElementById('edit-b').innerHTML = `
     <div class="sec-title">المعلومات الأساسية</div>
-    <div class="erow"><div class="ef"><label>الاسم</label><input type="text" id="e-nm" value="${c.name}"></div><div class="ef"><label>الهاتف</label><input type="tel" id="e-ph" value="${c.phone||''}"></div></div>
+    <div class="erow"><div class="ef"><label>الاسم</label><input type="text" id="e-nm" value="${c.name.replace(/"/g, '&quot;')}"></div><div class="ef"><label>الهاتف</label><input type="tel" id="e-ph" value="${c.phone||''}"></div></div>
     <div class="erow"><div class="ef full"><label>العنوان</label><input type="text" id="e-adr" value="${c.address||''}"></div></div>
     <div class="erow"><div class="ef"><label>الحالة الاجتماعية</label><select id="e-soc">${socOpts.map(o=>`<option ${o===c.social?'selected':''}>${o}</option>`).join('')}<option value="" ${!c.social?'selected':''}>—</option></select></div><div class="ef"><label>عدد الأبناء</label><input type="number" id="e-ch" value="${c.children||0}"></div></div>
     <div class="sec-title">الوضع المادي</div>
@@ -459,7 +503,14 @@ function openEdit(id) {
     <div class="sec-title">الاحتياجات</div>
     <div class="erow"><div class="ef full"><label>الاحتياجات</label><div style="display:flex;flex-wrap:wrap;">${nchks}</div></div></div>
     <div class="erow"><div class="ef"><label>الأولوية</label><select id="e-pr">${prOpts.map(o=>`<option ${o===c.priority?'selected':''}>${o}</option>`).join('')}<option value="" ${!c.priority?'selected':''}>—</option></select></div><div class="ef"><label>الحالة</label><select id="e-st"><option ${c.status==='نشطة'?'selected':''}>نشطة</option><option ${c.status==='مستقرة'?'selected':''}>مستقرة</option><option ${c.status==='تحت المتابعة'?'selected':''}>تحت المتابعة</option></select></div></div>
-    <div class="sec-title">ملاحظات</div>
+    <div class="sec-title">👶 الأبناء</div>
+    <div id="edit-kids-list">${kidsHtml}</div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="addEditKid()">＋ إضافة ابن/بنت</button>
+    <div class="sec-title">🩺 الحالة الصحية</div>
+    <div id="edit-pats-list">${patientsHtml}</div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="addEditPat()">＋ إضافة مريض</button>
+    <div class="erow"><div class="ef full"><label>ملاحظات صحية عامة</label><textarea id="e-hg">${c.healthGen || ''}</textarea></div></div>
+    <div class="sec-title">ملاحظات إضافية</div>
     <div class="erow"><div class="ef full"><label>ملاحظات</label><textarea id="e-nts">${c.notes||''}</textarea></div></div>
     <div class="erow"><div class="ef"><label>المُبلِّغ</label><input type="text" id="e-rep" value="${c.reporter||''}"></div><div class="ef"><label>آخر مساعدة</label><input type="text" id="e-lh" value="${c.lastHelp||''}"></div></div>`;
   document.getElementById('edit-ov').classList.add('on');
@@ -483,7 +534,33 @@ function saveEdit() {
   c.reporter = document.getElementById('e-rep').value;
   c.lastHelp = document.getElementById('e-lh').value;
   c.needs = needs;
-  c.hasHealth = (c.health && c.health.trim()) ? 'y' : 'n';
+  // جمع بيانات الأبناء
+  let kids = [];
+  document.querySelectorAll('#edit-kids-list .kid-edit').forEach(el => {
+    let nameInput = el.querySelector('input[name^="kid_name"]');
+    let genderSelect = el.querySelector('select[name^="kid_gender"]');
+    let levelInput = el.querySelector('input[name^="kid_level"]');
+    let name = nameInput ? nameInput.value : '';
+    let gender = genderSelect ? genderSelect.value : '';
+    let level = levelInput ? levelInput.value : '';
+    if (name) kids.push({name, gender, level});
+  });
+  c.kids = kids;
+  // جمع بيانات المرضى
+  let patients = [];
+  document.querySelectorAll('#edit-pats-list .pat-edit').forEach(el => {
+    let whoInput = el.querySelector('input[name^="pat_who"]');
+    let diseasesInput = el.querySelector('input[name^="pat_diseases"]');
+    let detailInput = el.querySelector('input[name^="pat_detail"]');
+    let who = whoInput ? whoInput.value : '';
+    let diseasesStr = diseasesInput ? diseasesInput.value : '';
+    let diseases = diseasesStr.split(/[,،]/).map(s=>s.trim()).filter(Boolean);
+    let detail = detailInput ? detailInput.value : '';
+    if (who) patients.push({who, diseases, detail});
+  });
+  c.patients = patients;
+  c.healthGen = document.getElementById('e-hg').value;
+  c.hasHealth = (patients.length > 0 || (c.health && c.health.trim())) ? 'y' : 'n';
   saveDB(db); closeOv('edit-ov'); renderTable(); renderDash(); toast('تم التحديث','ok');
 }
 
@@ -534,7 +611,19 @@ function exportWA() {
   window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
 }
 function downloadFile(name,content,mime) { let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type:mime+';charset=utf-8'})); a.download=name; a.click(); }
-function buildWA(c) { let nd = (Array.isArray(c.needs)?c.needs:[]).join('، ')||'—'; return `🔷 *بيانات حالة – رجال الخير*\n📅 ${new Date().toLocaleDateString('ar-MA')} | #${c.num}\n👤 *الاسم:* ${c.name}\n📞 *الهاتف:* ${c.phone||'—'}\n📍 *العنوان:* ${c.address||'—'}\n👥 *الحالة:* ${c.social||'—'} | الأبناء: ${c.children||0}\n🏠 *السكن:* ${c.housing||'—'}\n💰 *الكراء:* ${c.rent||'—'} درهم\n📊 *المدخول:* ${c.income||0} درهم (${c.incomeSrc||'—'})\n🆘 *الاحتياجات:* ${nd}\n⚡ *الأولوية:* ${c.priority||'—'}\n📝 *ملاحظات:* ${c.notes||'—'}`.trim(); }
+function buildWA(c) { 
+  let nd = (Array.isArray(c.needs)?c.needs:[]).join('، ')||'—';
+  let kidsText = '';
+  if (c.kids && c.kids.length) {
+    kidsText = `\n👶 الأبناء: ${c.kids.map(k=>`${k.name || '?'} (${k.gender||'?'})${k.level ? ' - '+k.level : ''}`).join('، ')}`;
+  }
+  let healthText = '';
+  if (c.patients && c.patients.length) {
+    healthText = `\n🩺 الحالة الصحية: ${c.patients.map(p=>`${p.who} (${p.diseases?.join(',')||'?'})${p.detail ? ' - '+p.detail : ''}`).join('؛ ')}`;
+    if (c.healthGen) healthText += `\n📝 ملاحظات صحية: ${c.healthGen}`;
+  }
+  return `🔷 *بيانات حالة – رجال الخير*\n📅 ${new Date().toLocaleDateString('ar-MA')} | #${c.num}\n👤 *الاسم:* ${c.name}\n📞 *الهاتف:* ${c.phone||'—'}\n📍 *العنوان:* ${c.address||'—'}\n👥 *الحالة:* ${c.social||'—'} | الأبناء: ${c.children||0}${kidsText}\n🏠 *السكن:* ${c.housing||'—'}\n💰 *الكراء:* ${c.rent||'—'} درهم\n📊 *المدخول:* ${c.income||0} درهم (${c.incomeSrc||'—'})\n🆘 *الاحتياجات:* ${nd}\n⚡ *الأولوية:* ${c.priority||'—'}${healthText}\n📝 *ملاحظات:* ${c.notes||'—'}`.trim(); 
+}
 function renderRpt() {
   let db = loadDB();
   let needsMap = {}; db.forEach(c => { (Array.isArray(c.needs)?c.needs:[]).forEach(nd => { nd=nd.trim(); if(nd) needsMap[nd]=(needsMap[nd]||0)+1; }); });
@@ -696,4 +785,4 @@ let savedAuto = localStorage.getItem('autoSaveEnabled');
 if (savedAuto === 'true') autoSaveEnabled = true;
 </script>
 </body>
-</html>
+  </html>
