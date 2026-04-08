@@ -428,7 +428,7 @@ function openDet(id) {
   if (c.notes) html += `<div class="dsec"><h4>ملاحظات</h4><p>${c.notes}</p></div>`;
   // إضافة بيانات الأبناء
   if (c.kids && c.kids.length) {
-    html += `<div class="dsec"><h4>👶 بيانات الأبناء</h4><div class="dgrid">`;
+    html += `<div class="dsec"><h4>🚼 بيانات الأبناء</h4><div class="dgrid">`;
     c.kids.forEach((kid, idx) => {
       html += `<div class="di"><div class="dl">الابن ${idx+1}</div><div class="dv">${kid.name || '—'} (${kid.gender || '—'}) - ${kid.level || '—'}</div></div>`;
     });
@@ -503,7 +503,7 @@ function openEdit(id) {
     <div class="sec-title">الاحتياجات</div>
     <div class="erow"><div class="ef full"><label>الاحتياجات</label><div style="display:flex;flex-wrap:wrap;">${nchks}</div></div></div>
     <div class="erow"><div class="ef"><label>الأولوية</label><select id="e-pr">${prOpts.map(o=>`<option ${o===c.priority?'selected':''}>${o}</option>`).join('')}<option value="" ${!c.priority?'selected':''}>—</option></select></div><div class="ef"><label>الحالة</label><select id="e-st"><option ${c.status==='نشطة'?'selected':''}>نشطة</option><option ${c.status==='مستقرة'?'selected':''}>مستقرة</option><option ${c.status==='تحت المتابعة'?'selected':''}>تحت المتابعة</option></select></div></div>
-    <div class="sec-title">👶 الأبناء</div>
+    <div class="sec-title"🚼 الأبناء</div>
     <div id="edit-kids-list">${kidsHtml}</div>
     <button type="button" class="btn btn-ghost btn-sm" onclick="addEditKid()">＋ إضافة ابن/بنت</button>
     <div class="sec-title">🩺 الحالة الصحية</div>
@@ -615,7 +615,7 @@ function buildWA(c) {
   let nd = (Array.isArray(c.needs)?c.needs:[]).join('، ')||'—';
   let kidsText = '';
   if (c.kids && c.kids.length) {
-    kidsText = `\n👶 الأبناء: ${c.kids.map(k=>`${k.name || '?'} (${k.gender||'?'})${k.level ? ' - '+k.level : ''}`).join('، ')}`;
+    kidsText = `\n🚼 الأبناء: ${c.kids.map(k=>`${k.name || '?'} (${k.gender||'?'})${k.level ? ' - '+k.level : ''}`).join('، ')}`;
   }
   let healthText = '';
   if (c.patients && c.patients.length) {
