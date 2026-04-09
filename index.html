@@ -214,6 +214,15 @@ html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--gray);colo
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   }
 }
+  /* إزالة أي قيود على ارتفاع الجداول */
+.tw, .xl-wrap {
+  max-height: none !important;
+  overflow-y: visible !important;
+  height: auto !important;
+}
+.content {
+  overflow-y: auto !important;
+          }
 </style>
 </head>
 <body>
@@ -370,6 +379,8 @@ function renderTable() {
   let db = loadDB(), q = document.getElementById('q').value.toLowerCase(), fp = document.getElementById('fp').value, fh = document.getElementById('fh').value, fs = document.getElementById('fs').value, fn2 = document.getElementById('fn2').value;
   let rows = db.filter(c => (c.name+c.phone+c.address).toLowerCase().includes(q) && (!fp || c.priority===fp) && (!fh || c.housing===fh) && (!fs || c.social===fs) && (!fn2 || (Array.isArray(c.needs) ? c.needs.join(','):'').includes(fn2)));
   rows.sort((a,b)=>{ let va = a[sortCol]||'', vb = b[sortCol]||''; if (sortCol==='num') va=parseInt(va), vb=parseInt(vb); return sortAsc ? (va>vb?1:-1) : (va<vb?1:-1); });
+  // بعد إنهاء الحلقة forEach
+document.querySelector('.tw').style.maxHeight = 'none';
   let tb = document.getElementById('tb'); tb.innerHTML = '';
   if (!rows.length) { document.getElementById('no-data').style.display='block'; return; }
   document.getElementById('no-data').style.display='none';
@@ -503,67 +514,92 @@ function addEditKid() {
   let idx = container.children.length;
   let div = document.createElement('div');
   div.className = 'erow kid-edit';
-  div.innerHTML = `<div class="ef"><input type="text" placeholder="الاسم" name="kid_name_${idx}"></div><div class="ef"><select name="kid_gender_${idx}"><option value="">الجنس</option><option>ذكر</option><option>أنثى</option></select></div><div class="ef"><input type="text" placeholder="المستوى الدراسي" name="kid_level_${idx}"></div><button type="button" class="btn btn-red btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  div.innerHTML = `
+    <div class="ef"><input type="text" placeholder="الاسم" name="kid_name_${idx}"></div>
+    <div class="ef"><select name="kid_gender_${idx}"><option value="">الجنس</option><option>ذكر</option><option>أنثى</option></select></div>
+    <div class="ef"><input type="text" placeholder="المستوى الدراسي" name="kid_level_${idx}"></div>
+    <button type="button" class="btn btn-red btn-sm" onclick="this.parentElement.remove()">✕</button>
+  `;
   container.appendChild(div);
 }
+
 function addEditPat() {
   let container = document.getElementById('edit-pats-list');
   if (!container) return;
   let idx = container.children.length;
   let div = document.createElement('div');
   div.className = 'erow pat-edit';
-  div.innerHTML = `<div class="ef"><input type="text" placeholder="صلة المريض" name="pat_who_${idx}"></div><div class="ef"><input type="text" placeholder="المرض (مفصول بفواصل)" name="pat_diseases_${idx}"></div><div class="ef"><input type="text" placeholder="تفاصيل" name="pat_detail_${idx}"></div><button type="button" class="btn btn-red btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  div.innerHTML = `
+    <div class="ef"><input type="text" placeholder="صلة المريض" name="pat_who_${idx}"></div>
+    <div class="ef"><input type="text" placeholder="المرض (مفصول بفواصل)" name="pat_diseases_${idx}"></div>
+    <div class="ef"><input type="text" placeholder="تفاصيل" name="pat_detail_${idx}"></div>
+    <button type="button" class="btn btn-red btn-sm" onclick="this.parentElement.remove()">✕</button>
+  `;
   container.appendChild(div);
-}
-function saveEdit() {
-  let db = loadDB(), idx = db.findIndex(x=>x.id===activeId); if(idx<0) return;
-  let c = db[idx];
-  let needs = [...document.querySelectorAll('#edit-b input[name="end"]:checked')].map(x=>x.value);
-  c.name = document.getElementById('e-nm').value || c.name;
-  c.phone = document.getElementById('e-ph').value;
-  c.address = document.getElementById('e-adr').value;
-  c.social = document.getElementById('e-soc').value;
-  c.children = document.getElementById('e-ch').value;
-  c.housing = document.getElementById('e-hs').value;
-  c.rent = document.getElementById('e-rt').value;
-  c.income = document.getElementById('e-inc').value;
-  c.incomeSrc = document.getElementById('e-isrc').value;
-  c.priority = document.getElementById('e-pr').value;
-  c.status = document.getElementById('e-st').value;
-  c.notes = document.getElementById('e-nts').value;
-  c.reporter = document.getElementById('e-rep').value;
-  c.lastHelp = document.getElementById('e-lh').value;
-  c.needs = needs;
-  // جمع بيانات الأبناء
+  }
+function collectKidsEdit() {
   let kids = [];
   document.querySelectorAll('#edit-kids-list .kid-edit').forEach(el => {
-    let nameInput = el.querySelector('input[name^="kid_name"]');
-    let genderSelect = el.querySelector('select[name^="kid_gender"]');
-    let levelInput = el.querySelector('input[name^="kid_level"]');
-    let name = nameInput ? nameInput.value : '';
-    let gender = genderSelect ? genderSelect.value : '';
-    let level = levelInput ? levelInput.value : '';
-    if (name) kids.push({name, gender, level});
+    let name = el.querySelector('input[name^="kid_name"]')?.value || '';
+    let gender = el.querySelector('select[name^="kid_gender"]')?.value || '';
+    let level = el.querySelector('input[name^="kid_level"]')?.value || '';
+    if (name) kids.push({ name, gender, level });
   });
-  c.kids = kids;
-  // جمع بيانات المرضى
-  let patients = [];
-  document.querySelectorAll('#edit-pats-list .pat-edit').forEach(el => {
-    let whoInput = el.querySelector('input[name^="pat_who"]');
-    let diseasesInput = el.querySelector('input[name^="pat_diseases"]');
-    let detailInput = el.querySelector('input[name^="pat_detail"]');
-    let who = whoInput ? whoInput.value : '';
-    let diseasesStr = diseasesInput ? diseasesInput.value : '';
-    let diseases = diseasesStr.split(/[,،]/).map(s=>s.trim()).filter(Boolean);
-    let detail = detailInput ? detailInput.value : '';
-    if (who) patients.push({who, diseases, detail});
-  });
-  c.patients = patients;
-  c.healthGen = document.getElementById('e-hg').value;
-  c.hasHealth = (patients.length > 0 || (c.health && c.health.trim())) ? 'y' : 'n';
-  saveDB(db); closeOv('edit-ov'); renderTable(); renderDash(); toast('تم التحديث','ok');
+  return kids;
 }
 
+function collectPatsEdit() {
+  let patients = [];
+  document.querySelectorAll('#edit-pats-list .pat-edit').forEach(el => {
+    let who = el.querySelector('input[name^="pat_who"]')?.value || '';
+    let diseasesStr = el.querySelector('input[name^="pat_diseases"]')?.value || '';
+    let diseases = diseasesStr.split(/[,،]/).map(s => s.trim()).filter(Boolean);
+    let detail = el.querySelector('input[name^="pat_detail"]')?.value || '';
+    if (who) patients.push({ who, diseases, detail });
+  });
+  return patients;
+}
+function saveEdit() {
+  let db = loadDB();
+  let idx = db.findIndex(x => x.id === activeId);
+  if (idx < 0) return;
+  let c = db[idx];
+
+  // البيانات الأساسية
+  c.name = document.getElementById('e-nm')?.value || c.name;
+  c.phone = document.getElementById('e-ph')?.value || '';
+  c.address = document.getElementById('e-adr')?.value || '';
+  c.social = document.getElementById('e-soc')?.value || '';
+  c.children = parseInt(document.getElementById('e-ch')?.value) || 0;
+  c.housing = document.getElementById('e-hs')?.value || '';
+  c.rent = parseFloat(document.getElementById('e-rt')?.value) || 0;
+  c.income = parseFloat(document.getElementById('e-inc')?.value) || 0;
+  c.incomeSrc = document.getElementById('e-isrc')?.value || '';
+  c.priority = document.getElementById('e-pr')?.value || '';
+  c.status = document.getElementById('e-st')?.value || 'نشطة';
+  c.notes = document.getElementById('e-nts')?.value || '';
+  c.reporter = document.getElementById('e-rep')?.value || '';
+  c.lastHelp = document.getElementById('e-lh')?.value || '';
+
+  // الاحتياجات (checkbox)
+  let needs = Array.from(document.querySelectorAll('#edit-b input[name="end"]:checked')).map(cb => cb.value);
+  c.needs = needs;
+
+  // الأبناء والمرضى (باستخدام الدوال الجديدة)
+  c.kids = collectKidsEdit();
+  c.patients = collectPatsEdit();
+  c.healthGen = document.getElementById('e-hg')?.value || '';
+
+  // تحديث hasHealth
+  c.hasHealth = (c.patients.length > 0 || (c.healthGen && c.healthGen.trim() !== '')) ? 'y' : 'n';
+
+  // حفظ البيانات (هذا يستدعي saveDB الذي يشغل syncToSheets إذا كان autoSaveEnabled)
+  saveDB(db);
+  closeOv('edit-ov');
+  renderTable();
+  renderDash();
+  toast('تم التحديث والمزامنة (إذا كانت مفعلة)', 'ok');
+  }
 // ----------------------------- دوال إضافة الحالة الجديدة -----------------------------
 let fp = 1, FN = 5, dbtState = {v:'n'}, hltState = {v:'n'}, ptCtr = 0;
 function togDebt(val) { dbtState.v = val; document.getElementById('dbt-y').classList.toggle('active', val==='y'); document.getElementById('dbt-n').classList.toggle('active', val==='n'); document.getElementById('dbt-d').style.display = val==='y' ? 'block' : 'none'; }
@@ -622,6 +658,7 @@ function renderXL() {
   html += db.map(c => `<tr data-id="${c.id}">${cols.map(k => `<td contenteditable="true" data-key="${k}">${k==='needs' ? (Array.isArray(c[k])?c[k].join('، '):'') : (c[k]||'')}</td>`).join('')}<td><button class="xl-del" onclick="xlDelRow(${c.id})">✕</button></td></tr>`).join('');
   html += `</tbody></table>`;
   document.getElementById('xl-wrap').innerHTML = html;
+  document.querySelector('.xl-wrap').style.maxHeight = 'none';
 }
 function saveXLEdits() {
   let db = loadDB();
