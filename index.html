@@ -699,7 +699,81 @@ function saveWebAppUrl() { let url = document.getElementById('webAppUrl').value.
 async function checkConnection() { let url = localStorage.getItem('webAppUrl'); if(!url) { toast('الرجاء إدخال رابط Web App أولاً','err'); return; } try { await fetch(url, { method: 'GET', mode: 'no-cors' }); toast('الاتصال ناجح (تم إرسال الطلب)', 'ok'); } catch(e) { toast('فشل الاتصال: '+e.message, 'err'); } }
 async function syncToSheets() { let url = localStorage.getItem('webAppUrl'); if(!url) { toast('الرجاء إدخال رابط Web App أولاً','err'); return; } try { let db = loadDB(); await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(db) }); toast('تم الإرسال (قد تحتاج لتحديث الجدول)', 'ok'); addLog('تمت المزامنة مع Google Sheets'); } catch(e) { toast('فشل الإرسال: '+e.message, 'err'); } }
 function toggleAutoSave() { autoSaveEnabled = !autoSaveEnabled; localStorage.setItem('autoSaveEnabled', autoSaveEnabled); let btn = document.getElementById('autoSaveBtn'); let st = document.getElementById('autoSaveStatus'); if(autoSaveEnabled) { btn.textContent = '🔴 تعطيل الحفظ التلقائي'; st.innerHTML = '(مفعل ✅)'; toast('تم تفعيل الحفظ التلقائي','ok'); } else { btn.textContent = '🔘 تفعيل الحفظ التلقائي'; st.innerHTML = '(غير مفعل)'; toast('تم إلغاء الحفظ التلقائي','ok'); } }
-async function loadFromSheets() { toast('وظيفة التحميل تحتاج إلى إعداد إضافي في الـ Script', 'err'); }
+async function loadFromSheets() {
+  let url = localStorage.getItem('webAppUrl');
+  if (!url) {
+    toast('الرجاء إدخال رابط Web App أولاً', 'err');
+    return;
+  }
+  try {
+    let response = await fetch(url, { method: 'GET', mode: 'cors' });
+    if (!response.ok) throw new Error('فشل التحميل: ' + response.status);
+    let data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      toast('لا توجد بيانات في الجدول', 'err');
+      return;
+    }
+
+    // تحويل البيانات إلى الشكل الذي يتوقعه التطبيق
+    let converted = data.map((row, idx) => {
+      // معالجة حقل kids (نص JSON أو مصفوفة)
+      if (typeof row.kids === 'string') {
+        try {
+          row.kids = JSON.parse(row.kids);
+        } catch (e) {
+          row.kids = [];
+        }
+      }
+      if (!Array.isArray(row.kids)) row.kids = [];
+
+      // معالجة حقل patients (نص JSON أو مصفوفة)
+      if (typeof row.patients === 'string') {
+        try {
+          row.patients = JSON.parse(row.patients);
+        } catch (e) {
+          row.patients = [];
+        }
+      }
+      if (!Array.isArray(row.patients)) row.patients = [];
+
+      // معالجة حقل needs (نص JSON أو نص مفصول بفواصل)
+      if (typeof row.needs === 'string') {
+        // قد تكون needs مصفوفة بصيغة JSON أو نص عادي مفصول بفواصل أو عمودي
+        if (row.needs.startsWith('[') || row.needs.startsWith('{')) {
+          try {
+            row.needs = JSON.parse(row.needs);
+          } catch (e) {
+            row.needs = row.needs.split(/[|,،]/).map(s => s.trim()).filter(Boolean);
+          }
+        } else {
+          row.needs = row.needs.split(/[|,،]/).map(s => s.trim()).filter(Boolean);
+        }
+      }
+      if (!Array.isArray(row.needs)) row.needs = [];
+
+      // تحويل الحقول الرقمية
+      row.id = Number(row.id);
+      row.num = Number(row.num);
+      row.children = Number(row.children);
+      row.rent = Number(row.rent);
+      row.income = Number(row.income);
+
+      // التأكد من وجود تاريخ التسجيل
+      if (!row.date) row.date = new Date().toISOString().split('T')[0];
+
+      return row;
+    });
+
+    // حفظ البيانات في localStorage
+    saveDB(converted);
+    toast('تم تحميل البيانات من Google Sheets بنجاح', 'ok');
+    renderTable();
+    renderDash();
+  } catch (e) {
+    console.error(e);
+    toast('فشل التحميل: ' + e.message, 'err');
+  }
+          }
 function renderGD() { let logs = JSON.parse(localStorage.getItem(LOG_KEY)||'[]'); document.getElementById('save-log').innerHTML = logs.length ? logs.map(l=>`<div>• ${l}</div>`).join('') : '<div>لا توجد سجلات</div>'; let url = localStorage.getItem('webAppUrl'); if(url) document.getElementById('webAppUrl').value = url; let savedAuto = localStorage.getItem('autoSaveEnabled'); if(savedAuto === 'true') autoSaveEnabled = true; document.getElementById('autoSaveStatus').innerHTML = autoSaveEnabled ? '(مفعل ✅)' : '(غير مفعل)'; document.getElementById('autoSaveBtn').textContent = autoSaveEnabled ? '🔴 تعطيل الحفظ التلقائي' : '🔘 تفعيل الحفظ التلقائي'; }
 function syncNow() { saveDB(loadDB()); renderGD(); toast('تم المزامنة المحلية','ok'); }
 
